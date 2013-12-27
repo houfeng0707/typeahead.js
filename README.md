@@ -83,6 +83,10 @@ $('input.typeahead-devs').typeahead({
 $('input.typeahead-devs').typeahead('destroy');
 ```
 
+#### jQuery#typeahead('setQuery', query)
+
+Sets the current query of the typeahead. This is always preferable to using `$("input.typeahead").val(query)`, which will result in unexpected behavior. To clear the query, simply set it to an empty string.
+
 ### Dataset
 
 A dataset is an object that defines a set of data that hydrates suggestions. Typeaheads can be backed by multiple datasets. Given a query, a typeahead instance will inspect its backing datasets and display relevant suggestions to the end-user. 
@@ -95,9 +99,9 @@ When defining a dataset, the following options are available:
 
 * `limit` – The max number of suggestions from the dataset to display for a given query. Defaults to `5`.
 
-* `template` – The template used to render suggestions. Can be a string or a precompiled template. If not provided, suggestions will render as their value contained in a `<p>` element (i.e. `<p>value</p>`).
+* `template` – The template used to render suggestions. Can be a string or a precompiled template (i.e. a function that takes a [datum][datum] as input and returns html as output). If not provided, suggestions will render as their value contained in a `<p>` element (i.e. `<p>value</p>`).
 
-* `engine` – The template engine used to compile/render `template` if it is a string. Any engine can use used as long as it adheres to the [expected API][template-engine-compatibility]. **Required** if `template` is a string.
+* `engine` – The template engine used to compile/render `template` if it is a string. Any engine can be used as long as it adheres to the [expected API][template-engine-compatibility]. **Required** if `template` is a string.
 
 * `header` – The header rendered before suggestions in the dropdown menu. Can be either a DOM element or HTML.
 
@@ -111,7 +115,7 @@ When defining a dataset, the following options are available:
 
 ### Datum
 
-The individual units that compose datasets are called datums. The canonical form of a datum is an object with a `value` property and a `tokens` property. `value` is the string that represents the underlying value of the datum and `tokens` is a collection of strings that aid typeahead.js in matching datums with a given query.
+The individual units that compose datasets are called datums. The canonical form of a datum is an object with a `value` property and a `tokens` property. `value` is the string that represents the underlying value of the datum and `tokens` is a collection of **single-word** strings that aid typeahead.js in matching datums with a given query.
 
 ```javascript
 {
@@ -157,7 +161,7 @@ Remote data is only used when the data provided by `local` and `prefetch` is ins
 
 When configuring `remote`, the following options are available:
 
-* `url` – A URL to make requests to when when the data provided by `local` and `prefetch` is insufficient. **Required.**
+* `url` – A URL to make requests to when the data provided by `local` and `prefetch` is insufficient. **Required.**
 
 * `dataType` – The type of data you're expecting from the server. See the [jQuery.ajax docs][jquery-ajax] for more info. Defaults to `json`.
 
@@ -189,11 +193,32 @@ typeahead.js triggers the following custom events:
 
 * `typeahead:closed` – Triggered when the dropdown menu of a typeahead is closed.
 
-* `typeahead:selected` – Triggered when a suggestion from the dropdown menu is explicitly selected. The datum for the selected suggestion is passed to the event handler as an argument.
+* `typeahead:selected` – Triggered when a suggestion from the dropdown menu is explicitly selected. The datum for the selected suggestion is passed to the event handler as an argument in addition to the name of the dataset it originated from.
 
-* `typeahead:autocompleted` – Triggered when the query is autocompleted. The datum used for autocompletion is passed to the event handler as an argument.
+* `typeahead:autocompleted` – Triggered when the query is autocompleted. The datum used for autocompletion is passed to the event handler as an argument in addition to the name of the dataset it originated from.
 
 All custom events are triggered on the element initialized as a typeahead.
+
+```javascript
+$('input.typeahead-devs').typeahead({
+    name: 'accounts',
+    local: [{
+        value: '@JakeHarding',
+        tokens: ['Jake', 'Harding'],
+        name: 'Jake Harding',
+        profileImageUrl: 'https://twitter.com/JakeHaridng/profile_img'
+    }]
+});
+
+$('input.typeahead-devs').on('typeahead:selected', function (object, datum) {
+    // Example: {type: "typeahead:selected", timeStamp: 1377890016108, jQuery203017338529066182673: true, isTrigger: 3, namespace: ""...}
+    console.log(object);
+
+    // Datum containg value, tokens, and custom properties
+    // Example: {value: "@JakeHarding", tokens: ['Jake', 'Harding'], name: "Jake Harding", profileImageUrl: "https://twitter.com/JakeHaridng/profile_img"}
+    console.log(datum);
+});
+```
 
 ### Template Engine Compatibility
 
@@ -233,14 +258,6 @@ By default, the dropdown menu created by typeahead.js is going to look ugly and 
 ```
 
 When an end-user mouses or keys over a `.tt-suggestion`, the class `tt-is-under-cursor` will be added to it. You can use this class as a hook for styling the "under cursor" state of suggestions.
-
-Bootstrap Integration
----------------------
-
-For simple autocomplete use cases, the typeahead component [Bootstrap][bootstrap] provides should suffice. However, if you'd prefer to take advantage of some of the advance features typeahead.js provides, here's what you'll need to do to integrate typeahead.js with Bootstrap:
-
-* If you're customizing Bootstrap, exclude the typeahead component. If you're depending on the standard *bootstrap.js*, ensure *typeahead.js* is loaded after it.
-* The DOM structure of the dropdown menu used by typeahead.js differs from the DOM structure of the Bootstrap dropdown menu. You'll need to load some [additional CSS][typeahead.js-bootstrap.css] in order to get the typeahead.js dropdown menu to fit the default Bootstrap theme.
 
 Browser Support
 ---------------
@@ -347,9 +364,7 @@ Licensed under the MIT License
 <!-- links to third party projects -->
 [jasmine]: http://pivotal.github.com/jasmine/
 [grunt-cli]: https://github.com/gruntjs/grunt-cli
-[bower]: http://twitter.github.com/bower/
+[bower]: http://bower.io/
 [jQuery]: http://jquery.com/
 [jquery-ajax]: http://api.jquery.com/jQuery.ajax/
 [hogan.js]: http://twitter.github.com/hogan.js/
-[bootstrap]: http://twitter.github.com/bootstrap/
-[typeahead.js-bootstrap.css]: https://github.com/jharding/typeahead.js-bootstrap.css
